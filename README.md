@@ -1,7 +1,9 @@
 # Propose Your Crush
 
-![!NOTE]
-This is just a demo project. Don't blame me if your crush rejects you!
+> [!NOTE]
+> This is just a demo project. Don't blame me if your crush rejects you!
+
+
 This project demonstrates two interactive button behaviors using HTML, CSS, and JavaScript. 
 
 - **Model 1**: The button disappears when the user attempts to hover over it.
