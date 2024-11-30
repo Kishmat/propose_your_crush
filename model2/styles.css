@@ -1,0 +1,55 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    font-family: Arial;
+    background: #ff7fd3;
+    color: white;
+}
+
+.container{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%,-50%);
+}
+
+.info{
+    text-align: center;
+    font-size: 45px;
+    margin: 20px 0;
+}
+
+.options{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.options .option{
+    padding: 70px;
+    transition: translate .5s ease;
+}
+
+.options .option button{
+    border: none;
+    padding: 20px 60px;
+    border-radius: 12px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.options .option button.yes{
+    background: green;
+}
+.options .option button.yes:hover{
+    background: #01a601;
+}
+.options .option button.no{
+    background: #fe3838;
+}
