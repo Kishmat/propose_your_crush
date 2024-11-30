@@ -31,5 +31,7 @@ This project demonstrates two interactive button behaviors using HTML, CSS, and 
 1. Clone the repository to your local machine:
    ```bash
    git clone https://github.com/Kishmat/propose.git
-**OR**
+<p align="center">
+   OR
+</p>
 2. Download the code, extract the zip file and choose any of the models `model1` or `model2` and launch the `index.html` file.
