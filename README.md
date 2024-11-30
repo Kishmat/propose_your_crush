@@ -20,11 +20,11 @@ This project demonstrates two interactive button behaviors using HTML, CSS, and 
 ## Demo
 `Model1/index.html`
 
-![Pikachu](https://dkemhji6i1k0x.cloudfront.net/000_clients/896535/page/896535al1Ykfdt.gif)
+![Demo Model 1](/demos/model1.gif)
 
 `Model2/index.html`
 
-![Pikachu](https://dkemhji6i1k0x.cloudfront.net/000_clients/896535/page/896535al1Ykfdt.gif)
+![Demo Model 2](/demos/model2.gif)
 
 ## Installation
 
