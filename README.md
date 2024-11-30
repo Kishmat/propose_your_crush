@@ -1,6 +1,6 @@
 # Propose Your Crush
 
-> [!NOTE]
+> [!IMPORTANT]
 > This is just a demo project. Don't blame me if your crush rejects you!
 
 
