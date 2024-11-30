@@ -34,4 +34,5 @@ This project demonstrates two interactive button behaviors using HTML, CSS, and 
 <p align="center">
    OR
 </p>
+
 2. Download the code, extract the zip file and choose any of the models `model1` or `model2` and launch the `index.html` file.
