@@ -1,1 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propose your Crush</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="info">Do you love me?</h1>
+        <div class="options">
+            <div class="option">
+                <button class="yes" onclick="happy();">Yes</button>
+            </div>
 
+            <div class="option" onmouseenter="hide_button(this);" onmouseleave="show_button(this);">
+                <button class="no" onclick="sad();">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
