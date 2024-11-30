@@ -1,5 +1,7 @@
 # Propose Your Crush
 
+![!NOTE]
+This is just a demo project. Don't blame me if your crush rejects you!
 This project demonstrates two interactive button behaviors using HTML, CSS, and JavaScript. 
 
 - **Model 1**: The button disappears when the user attempts to hover over it.
@@ -10,6 +12,10 @@ This project demonstrates two interactive button behaviors using HTML, CSS, and 
 - **Model 1**: A button vanishes as soon as the user tries to hover over it.
 - **Model 2**: Two buttons appear on the screen, and when either of them is hovered, their positions are swapped.
 - Fun and interactive ways to impress your **Crush** based on user hover interactions!
+
+## Limitation
+
+- Doesn't work on mobiles as it uses `onmouseenter` event which is only available for desktops
 
 ## Technologies Used
 
