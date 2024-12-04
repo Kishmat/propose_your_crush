@@ -12,7 +12,7 @@ This project demonstrates two interactive button behaviors using HTML, CSS, and 
 ## Features
 
 - **Model 1**: A button vanishes as soon as the user tries to hover over it.
-- **Model 2**: Two buttons appear on the screen, and when either of them is hovered, their positions are swapped.
+- **Model 2**: Two buttons appear on the screen, and when one of the specific`(in this case No)` is hovered, their positions are swapped.
 - Fun and interactive ways to impress your **Crush** based on user hover interactions!
 
 ## Limitation
