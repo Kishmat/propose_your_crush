@@ -141,7 +141,7 @@ Future<List<Map<String, String>>> fetchHlsVariants(String url) async {
 }
 
 class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
-  VideoPlayerController? _controller;
+  late VideoPlayerController _controller;
   bool _showControls = true;
   Duration _currentPosition = Duration.zero;
   bool _isFullScreen = false;
@@ -172,9 +172,9 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
   }
 
   void _checkSubtitles() {
-    final position = _controller?.value.position;
+    final position = _controller.value.position;
     final activeSubtitle = _subtitles.firstWhere(
-      (s) => position! >= s.start && position <= s.end,
+      (s) => position >= s.start && position <= s.end,
       orElse: () =>
           Subtitle(start: Duration.zero, end: Duration.zero, text: ''),
     );
@@ -211,12 +211,12 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
         ), // or first, depending on logic
       );
 
-      await _controller!.initialize();
+      await _controller.initialize();
 
-      _controller!.addListener(() {
+      _controller.addListener(() {
         if (!mounted || isSeeking) return;
 
-        final value = _controller!.value;
+        final value = _controller.value;
 
         setState(() {
           _currentPosition = value.position;
@@ -230,17 +230,17 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
       });
 
       setState(() {
-        _masterUrl = _controller!.dataSource;
+        _masterUrl = _controller.dataSource;
         _currentQualityUrl = _masterUrl;
         manualPause = false;
       });
 
-      _controller!.play();
+      _controller.play();
       _toggleFullScreen();
 
       if (widget.subtitleUrl.isNotEmpty) {
         _subtitleTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
-          if (_controller!.value.isPlaying) {
+          if (_controller.value.isPlaying) {
             _checkSubtitles();
           }
         });
@@ -254,17 +254,17 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
   }
 
   void _switchQuality(String newUrl) async {
-    final oldPosition = _controller!.value.position;
-    final wasPlaying = _controller!.value.isPlaying;
+    final oldPosition = _controller.value.position;
+    final wasPlaying = _controller.value.isPlaying;
 
-    await _controller!.pause();
-    await _controller!.dispose();
+    await _controller.pause();
+    await _controller.dispose();
 
     _controller = VideoPlayerController.network(newUrl);
-    await _controller!.initialize();
-    await _controller!.seekTo(oldPosition);
+    await _controller.initialize();
+    await _controller.seekTo(oldPosition);
     if (wasPlaying) {
-      _controller!.play();
+      _controller.play();
     }
 
     setState(() {
@@ -272,9 +272,9 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
       _currentQualityUrl = newUrl;
     });
 
-    _controller!.addListener(() {
+    _controller.addListener(() {
       if (!mounted) return;
-      final value = _controller!.value;
+      final value = _controller.value;
       if (!isSeeking) {
         setState(() {
           _currentPosition = value.position;
@@ -324,9 +324,9 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
                     return ChoiceChip(
                       checkmarkColor: Colors.white,
                       label: Text('${speed}x'),
-                      selected: _controller!.value.playbackSpeed == speed,
+                      selected: _controller.value.playbackSpeed == speed,
                       onSelected: (selected) {
-                        _controller!.setPlaybackSpeed(speed);
+                        _controller.setPlaybackSpeed(speed);
                         Navigator.pop(context); // Close sheet
                       },
                       shape: RoundedRectangleBorder(
@@ -505,21 +505,21 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
 
   void _toggleMute() {
     setState(() {
-      if (_controller!.value.volume == 0.0) {
-        _controller!.setVolume(1.0); // Unmute
+      if (_controller.value.volume == 0.0) {
+        _controller.setVolume(1.0); // Unmute
       } else {
-        _controller!.setVolume(0.0); // Mute
+        _controller.setVolume(0.0); // Mute
       }
     });
   }
 
   void _togglePlayPause() {
     setState(() {
-      if (_controller!.value.isPlaying) {
-        _controller!.pause();
+      if (_controller.value.isPlaying) {
+        _controller.pause();
         manualPause = true; // user paused manually
       } else {
-        _controller!.play();
+        _controller.play();
         manualPause = false; // playing, so not manually paused
       }
     });
@@ -541,15 +541,15 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
   }
 
   void _seekRelative(int seconds) {
-    final current = _controller!.value.position;
+    final current = _controller.value.position;
     final target = current + Duration(seconds: seconds);
 
-    _controller!.seekTo(target < Duration.zero ? Duration.zero : target);
+    _controller.seekTo(target < Duration.zero ? Duration.zero : target);
   }
 
   @override
   Widget build(BuildContext context) {
-    final value = _controller!.value;
+    final value = _controller.value;
     final isBuffering = !manualPause && !value.isPlaying && value.isInitialized;
 
     return MaterialApp(
@@ -589,7 +589,7 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
                               children: [
                                 AspectRatio(
                                   aspectRatio: 16 / 10,
-                                  child: VideoPlayer(_controller!),
+                                  child: VideoPlayer(_controller),
                                 ),
                                 if (_currentSubtitle.isNotEmpty)
                                   Container(
@@ -732,12 +732,12 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
                                     value: isSeeking
                                         ? _currentPosition.inMilliseconds
                                               .toDouble()
-                                        : _controller!
+                                        : _controller
                                               .value
                                               .position
                                               .inMilliseconds
                                               .toDouble(),
-                                    max: _controller!
+                                    max: _controller
                                         .value
                                         .duration
                                         .inMilliseconds
@@ -755,7 +755,7 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
                                       });
                                     },
                                     onChangeEnd: (value) {
-                                      _controller!
+                                      _controller
                                           .seekTo(
                                             Duration(
                                               milliseconds: value.toInt(),
@@ -870,7 +870,7 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
     });
     _overlayTimer?.cancel();
     _subtitleTimer?.cancel();
-    _controller!.dispose();
+    _controller.dispose();
     super.dispose();
   }
 }
