@@ -5,16 +5,16 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'image_slider.dart';
 
-class CustomVideoPlayer extends StatefulWidget {
+class AnimeVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final String subtitleUrl;
-  const CustomVideoPlayer({
+  const AnimeVideoPlayer({
     super.key,
     required this.videoUrl,
     required this.subtitleUrl,
   });
   @override
-  _CustomVideoPlayerState createState() => _CustomVideoPlayerState();
+  _AnimeVideoPlayerState createState() => _AnimeVideoPlayerState();
 }
 
 class Subtitle {
@@ -140,8 +140,8 @@ Future<List<Map<String, String>>> fetchHlsVariants(String url) async {
   return variants;
 }
 
-class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
-  late VideoPlayerController _controller;
+class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
+  VideoPlayerController? _controller;
   bool _showControls = true;
   Duration _currentPosition = Duration.zero;
   bool _isFullScreen = false;
@@ -172,9 +172,9 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   }
 
   void _checkSubtitles() {
-    final position = _controller.value.position;
+    final position = _controller?.value.position;
     final activeSubtitle = _subtitles.firstWhere(
-      (s) => position >= s.start && position <= s.end,
+      (s) => position! >= s.start && position <= s.end,
       orElse: () =>
           Subtitle(start: Duration.zero, end: Duration.zero, text: ''),
     );
@@ -188,59 +188,83 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..initialize().then((_) async {
-        setState(() {});
-        _controller.play();
-        _toggleFullScreen();
-        _masterUrl = _controller.dataSource;
-        _currentQualityUrl = _masterUrl;
-        manualPause = false;
-        if (widget.subtitleUrl.isNotEmpty) {
-          _subtitleTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
-            if (_controller.value.isPlaying) {
-              _checkSubtitles();
-            }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: Color(0xFF121212),
+          statusBarIconBrightness: Brightness.light,
+        ),
+      );
+    });
+
+    _initController();
+  }
+
+  Future<void> _initController() async {
+    try {
+      _qualityVariants = await fetchHlsVariants(widget.videoUrl);
+
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(
+          _qualityVariants.last['url']!,
+        ), // or first, depending on logic
+      );
+
+      await _controller!.initialize();
+
+      _controller!.addListener(() {
+        if (!mounted || isSeeking) return;
+
+        final value = _controller!.value;
+
+        setState(() {
+          _currentPosition = value.position;
+        });
+
+        if (value.position >= value.duration && !manualPause) {
+          setState(() {
+            manualPause = true;
           });
         }
-        try {
-          _qualityVariants = await fetchHlsVariants(_controller.dataSource);
-        } catch (e) {
-          debugPrint('Error fetching quality variants: $e');
-          _qualityVariants = [];
-        }
-        if (widget.subtitleUrl.isNotEmpty) _loadSubtitles();
       });
-    _controller.addListener(() {
-      if (!mounted || isSeeking) return;
-
-      final value = _controller.value;
 
       setState(() {
-        _currentPosition = value.position;
+        _masterUrl = _controller!.dataSource;
+        _currentQualityUrl = _masterUrl;
+        manualPause = false;
       });
 
-      // When video ends, set manualPause true so play button shows
-      if (value.position >= value.duration && !manualPause) {
-        setState(() {
-          manualPause = true;
+      _controller!.play();
+      _toggleFullScreen();
+
+      if (widget.subtitleUrl.isNotEmpty) {
+        _subtitleTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
+          if (_controller!.value.isPlaying) {
+            _checkSubtitles();
+          }
         });
+
+        _loadSubtitles();
       }
-    });
+    } catch (e) {
+      debugPrint('Error fetching quality variants: $e');
+      _qualityVariants = [];
+    }
   }
 
   void _switchQuality(String newUrl) async {
-    final oldPosition = _controller.value.position;
-    final wasPlaying = _controller.value.isPlaying;
+    final oldPosition = _controller!.value.position;
+    final wasPlaying = _controller!.value.isPlaying;
 
-    await _controller.pause();
-    await _controller.dispose();
+    await _controller!.pause();
+    await _controller!.dispose();
 
     _controller = VideoPlayerController.network(newUrl);
-    await _controller.initialize();
-    await _controller.seekTo(oldPosition);
+    await _controller!.initialize();
+    await _controller!.seekTo(oldPosition);
     if (wasPlaying) {
-      _controller.play();
+      _controller!.play();
     }
 
     setState(() {
@@ -248,9 +272,9 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
       _currentQualityUrl = newUrl;
     });
 
-    _controller.addListener(() {
+    _controller!.addListener(() {
       if (!mounted) return;
-      final value = _controller.value;
+      final value = _controller!.value;
       if (!isSeeking) {
         setState(() {
           _currentPosition = value.position;
@@ -267,7 +291,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   void _openSettings() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Color(0xFF121212),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -298,14 +322,27 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                   spacing: 10,
                   children: [0.5, 1.0, 1.5, 2.0].map((speed) {
                     return ChoiceChip(
+                      checkmarkColor: Colors.white,
                       label: Text('${speed}x'),
-                      selected: _controller.value.playbackSpeed == speed,
+                      selected: _controller!.value.playbackSpeed == speed,
                       onSelected: (selected) {
-                        _controller.setPlaybackSpeed(speed);
+                        _controller!.setPlaybackSpeed(speed);
                         Navigator.pop(context); // Close sheet
                       },
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6.0),
+                        side: BorderSide(
+                          color: Color.fromARGB(
+                            255,
+                            49,
+                            49,
+                            49,
+                          ), // Border color
+                          width: 0.4,
+                        ),
+                      ),
                       selectedColor: Color(0xFF6153FF),
-                      backgroundColor: Colors.white12,
+                      backgroundColor: Color.fromARGB(255, 41, 41, 41),
                       labelStyle: const TextStyle(color: Colors.white),
                     );
                   }).toList(),
@@ -454,27 +491,35 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
       } else {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          SystemChrome.setSystemUIOverlayStyle(
+            const SystemUiOverlayStyle(
+              statusBarColor: Colors.white,
+              statusBarIconBrightness: Brightness.dark,
+            ),
+          );
+        });
       }
     });
   }
 
   void _toggleMute() {
     setState(() {
-      if (_controller.value.volume == 0.0) {
-        _controller.setVolume(1.0); // Unmute
+      if (_controller!.value.volume == 0.0) {
+        _controller!.setVolume(1.0); // Unmute
       } else {
-        _controller.setVolume(0.0); // Mute
+        _controller!.setVolume(0.0); // Mute
       }
     });
   }
 
   void _togglePlayPause() {
     setState(() {
-      if (_controller.value.isPlaying) {
-        _controller.pause();
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
         manualPause = true; // user paused manually
       } else {
-        _controller.play();
+        _controller!.play();
         manualPause = false; // playing, so not manually paused
       }
     });
@@ -496,27 +541,20 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   }
 
   void _seekRelative(int seconds) {
-    final current = _controller.value.position;
+    final current = _controller!.value.position;
     final target = current + Duration(seconds: seconds);
 
-    _controller.seekTo(target < Duration.zero ? Duration.zero : target);
+    _controller!.seekTo(target < Duration.zero ? Duration.zero : target);
   }
 
   @override
   Widget build(BuildContext context) {
-    final value = _controller.value;
+    final value = _controller!.value;
     final isBuffering = !manualPause && !value.isPlaying && value.isInitialized;
 
     return MaterialApp(
       title: 'Video Demo',
-      home: WillPopScope(
-        onWillPop: () async {
-          if (_isFullScreen) {
-            _toggleFullScreen();
-            return false;
-          }
-          return true;
-        },
+      home: SafeArea(
         child: Scaffold(
           backgroundColor: Colors.black,
           body: Center(
@@ -551,7 +589,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                               children: [
                                 AspectRatio(
                                   aspectRatio: 16 / 10,
-                                  child: VideoPlayer(_controller),
+                                  child: VideoPlayer(_controller!),
                                 ),
                                 if (_currentSubtitle.isNotEmpty)
                                   Container(
@@ -694,12 +732,12 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                                     value: isSeeking
                                         ? _currentPosition.inMilliseconds
                                               .toDouble()
-                                        : _controller
+                                        : _controller!
                                               .value
                                               .position
                                               .inMilliseconds
                                               .toDouble(),
-                                    max: _controller
+                                    max: _controller!
                                         .value
                                         .duration
                                         .inMilliseconds
@@ -717,7 +755,7 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
                                       });
                                     },
                                     onChangeEnd: (value) {
-                                      _controller
+                                      _controller!
                                           .seekTo(
                                             Duration(
                                               milliseconds: value.toInt(),
@@ -822,9 +860,17 @@ class _CustomVideoPlayerState extends State<CustomVideoPlayer> {
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFF121212),
+          statusBarIconBrightness: Brightness.light,
+        ),
+      );
+    });
     _overlayTimer?.cancel();
     _subtitleTimer?.cancel();
-    _controller.dispose();
+    _controller!.dispose();
     super.dispose();
   }
 }
