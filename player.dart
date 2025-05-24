@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/services.dart';
@@ -112,7 +113,7 @@ Duration _parseDuration(String timeString) {
       milliseconds: milliseconds,
     );
   } catch (e) {
-    print('⛔ Error parsing timeString "$timeString": $e');
+    debugPrint('⛔ Error parsing timeString "$timeString": $e');
     return Duration.zero;
   }
 }
@@ -212,40 +213,42 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
       );
 
       await _controller.initialize();
+      if (_controller.value.isInitialized) {
+        _controller.addListener(() {
+          if (!mounted || isSeeking) return;
 
-      _controller.addListener(() {
-        if (!mounted || isSeeking) return;
+          final value = _controller.value;
 
-        final value = _controller.value;
-
-        setState(() {
-          _currentPosition = value.position;
-        });
-
-        if (value.position >= value.duration && !manualPause) {
           setState(() {
-            manualPause = true;
+            _currentPosition = value.position;
           });
-        }
-      });
 
-      setState(() {
-        _masterUrl = _controller.dataSource;
-        _currentQualityUrl = _masterUrl;
-        manualPause = false;
-      });
-
-      _controller.play();
-      _toggleFullScreen();
-
-      if (widget.subtitleUrl.isNotEmpty) {
-        _subtitleTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
-          if (_controller.value.isPlaying) {
-            _checkSubtitles();
+          if (value.position >= value.duration && !manualPause) {
+            setState(() {
+              manualPause = true;
+            });
           }
         });
+      }
 
-        _loadSubtitles();
+      setState(() {
+        _masterUrl = widget.videoUrl;
+        _currentQualityUrl = _controller.dataSource;
+        manualPause = false;
+      });
+      if (_controller.value.isInitialized) {
+        _controller.play();
+        _toggleFullScreen();
+
+        if (widget.subtitleUrl.isNotEmpty) {
+          _subtitleTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
+            if (_controller.value.isPlaying) {
+              _checkSubtitles();
+            }
+          });
+
+          _loadSubtitles();
+        }
       }
     } catch (e) {
       debugPrint('Error fetching quality variants: $e');
@@ -254,13 +257,14 @@ class _AnimeVideoPlayerState extends State<AnimeVideoPlayer> {
   }
 
   void _switchQuality(String newUrl) async {
+    if (!_controller.value.isInitialized) return;
     final oldPosition = _controller.value.position;
     final wasPlaying = _controller.value.isPlaying;
 
     await _controller.pause();
     await _controller.dispose();
 
-    _controller = VideoPlayerController.network(newUrl);
+    _controller = VideoPlayerController.networkUrl(Uri.parse(newUrl));
     await _controller.initialize();
     await _controller.seekTo(oldPosition);
     if (wasPlaying) {
